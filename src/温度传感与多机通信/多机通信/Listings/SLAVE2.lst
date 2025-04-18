@@ -1,0 +1,125 @@
+A51 MACRO ASSEMBLER  SLAVE2                                                               05/10/2022 19:30:35 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\SLAVE2.obj
+ASSEMBLER INVOKED BY: D:\KEIL\C51\BIN\A51.EXE SLAVE2.a51 SET(SMALL) DEBUG PRINT(.\Listings\SLAVE2.lst) OBJECT(.\Objects\
+                      SLAVE2.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+  0027                 1     DECI EQU 27H
+  0029                 2     INT EQU 29H
+  0030                 3     SIG EQU 30H
+                       4     ;从机串口初始化
+0000 7598F0            5     S_INIT: MOV SCON,#0F0H
+                       6     ;11110000->5C0N
+                       7     ;使能串口收发，并设置工作在模式三
+0003 758920            8     MOV TMOD, #20H
+                       9     ;设置定时器11为工作模式2
+0006 758DFD           10     MOV TH1,#0FDH
+                      11     ;波特率设置为9600
+0009 758BFD           12     MOV TL1,#0FDH
+000C D28E             13     SETB TR1
+                      14     ;主机发送地址
+000E                  15     CHECK:
+000E 3098FD           16     JNB RI, $
+                      17     ;若RI等于0，则继续等待
+0011 C298             18     CLR RI
+                      19     ;清除接收中断标志RI
+0013 E599             20     MOV A,SBUF
+                      21     ;接受主机发来的地址信息
+0015 B402F6           22     CJNE A, #2,CHECK ;判断发送的地址是否 与本机地址相等，address(这里是1)�
+                             �示本机地址
+                      23     ;若不相等则继续等待，不做处理
+0018 C29D             24     CLR SM2
+                      25     ;将SM2位清零
+                      26     ;从机应答
+                      27     
+001A                  28     ACK1:
+001A D29B             29     SETB TB8
+001C 759902           30     MOV SBUF,#2;向主机发送应答信号，即发回本机地址(1)给主机
+001F 3099FD           31     JNB TI, $;trasmission
+                      32     ;判断发送缓冲区是否为空?
+0022 C299             33     CLR TI
+                      34     ;清零发送中断标志II
+                      35     
+                      36     
+0024                  37     TRASMIT_DATA_SIG: 
+0024 742B             38     MOV A,#00101011B;(数据)
+0026 F5A0             39     MOV P2,A
+                      40     
+0028 E530             41     MOV A,SIG
+002A A2D0             42     MOV C, P
+002C B3               43     CPL C
+002D 92E7             44     MOV ACC.7, C;生成最终要 发送的数据到A
+002F C29B             45     CLR TB8
+0031 F599             46     MOV SBUF, A
+0033 3099FD           47     JNB TI,$
+0036 C299             48     CLR TI
+0038 C2E7             49     CLR ACC.7
+                      50     
+003A                  51     TRASMIT_DATA_INT: 
+003A E529             52     MOV A,INT
+003C A2D0             53     MOV C, P
+003E B3               54     CPL C
+003F 92E7             55     MOV ACC.7, C;生成最终要 发送的数据到A
+0041 C29B             56     CLR TB8
+A51 MACRO ASSEMBLER  SLAVE2                                                               05/10/2022 19:30:35 PAGE     2
+
+0043 F599             57     MOV SBUF, A
+0045 3099FD           58     JNB TI,$
+0048 C299             59     CLR TI
+                      60     
+004A C2E7             61     CLR ACC.7
+                      62     
+004C                  63     TRASMIT_DATA_DECI: 
+004C E527             64     MOV A,DECI
+004E A2D0             65     MOV C, P
+0050 B3               66     CPL C
+0051 92E7             67     MOV ACC.7, C;生成最终要 发送的数据到A
+0053 C29B             68     CLR TB8
+0055 F599             69     MOV SBUF, A
+0057 3099FD           70     JNB TI,$
+005A C299             71     CLR TI
+                      72     
+005C C2E7             73     CLR ACC.7
+005E 22               74     RET
+                      75     
+                      76     END
+A51 MACRO ASSEMBLER  SLAVE2                                                               05/10/2022 19:30:35 PAGE     3
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+ACC. . . . . . . .  D ADDR   00E0H   A   
+ACK1 . . . . . . .  C ADDR   001AH   A   
+CHECK. . . . . . .  C ADDR   000EH   A   
+DECI . . . . . . .  N NUMB   0027H   A   
+INT. . . . . . . .  N NUMB   0029H   A   
+P. . . . . . . . .  B ADDR   00D0H.0 A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+RI . . . . . . . .  B ADDR   0098H.0 A   
+SBUF . . . . . . .  D ADDR   0099H   A   
+SCON . . . . . . .  D ADDR   0098H   A   
+SIG. . . . . . . .  N NUMB   0030H   A   
+SM2. . . . . . . .  B ADDR   0098H.5 A   
+S_INIT . . . . . .  C ADDR   0000H   A   
+TB8. . . . . . . .  B ADDR   0098H.3 A   
+TH1. . . . . . . .  D ADDR   008DH   A   
+TI . . . . . . . .  B ADDR   0098H.1 A   
+TL1. . . . . . . .  D ADDR   008BH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR1. . . . . . . .  B ADDR   0088H.6 A   
+TRASMIT_DATA_DECI.  C ADDR   004CH   A   
+TRASMIT_DATA_INT .  C ADDR   003AH   A   
+TRASMIT_DATA_SIG .  C ADDR   0024H   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

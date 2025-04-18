@@ -1,0 +1,284 @@
+;SPEED EQU 10H ;SPEED为转速等级标志,共7级,即1~7
+;FX EQU 11H ;FX 为方向标志
+;COUNT EQU 12H ;COUNT中断次数标志
+
+;ORG 0000H
+;AJMP MAIN
+;ORG 0003H ;外部中断0入口地址,加速子程序
+;AJMP UP
+;ORG 0013H ;外部中断1入口地址,减速子程序
+;AJMP DOWN
+;ORG 000BH ;定时器0中断入口地址,控制中断次数来达到控制转速 
+;AJMP ZDT0
+;ORG 0030H
+
+;MAIN: MOV SP,#60H
+;MOV TMOD,#01H ;工作于定时、软件置位启动,模式1(16 位计时器)
+;MOV TH0,#0CFH
+;MOV TL0,#2CH
+;MOV COUNT,#01H
+;SETB ET0 ;定时/计数器允许中断
+;CLR IT0 ;外部中断为电平触发方式,低电平有效
+;CLR IT1
+;SETB EX0 ;外部允许中断
+;SETB EX1
+;SETB EA ;开总中断
+;MOV R1,#10000000B ;共阳数码管方向显示8,速度值显示0
+;MOV R2,#00000001B
+;MOV SPEED,#00H
+;MOV FX,#00H
+
+;XIANS: MOV A,SPEED
+;MOV DPTR,#LED
+;MOVC A,@A+DPTR ;查表获取等级对应数码管代码
+;MOV P2,A ;第二个数码管显示转速等级
+;MOV A,FX ;准备判断转向
+;CJNE A,#10000000B,ELS
+;MOV P0, #0F9H ;第一个数码管显示 1,表示正转
+;AJMP QD
+
+;ELS: CJNE A,#00H,ZHENG
+;MOV P0,#0C0H ;第一个数码管显示 0,表示不转
+;AJMP QD
+
+;ZHENG: MOV P0,#0BFH ;第一个数码管显示-,表示反转
+;QD: JB P3.4,DD ;P3.4 接启动开关 K1,P3.4=1 时启动
+;CLR TR0 ;停止定时/计数器
+;MOV P0,#0C0H ;第一个数码管显示 0,表示不转
+;MOV P2,#0C0H ;第二个数码管显示 0,表示转速为 0
+;MOV SPEED,#00H ;重新赋初值
+;MOV FX,#00H
+;AJMP QD
+;DD: MOV A,SPEED
+;JNZ GO ;A 不等于 0,即初始速度不为零,则转移到 GO
+;CLR TR0 ;停止定时/计数器
+;AJMP QD
+
+;GO: SETB TR0 ;开启定时/计数器
+;;ACALL DELAY
+;AJMP XIANS
+
+
+;;以下 ZDT0 为定时器中断程序
+;ZDT0: 
+;PUSH ACC
+;PUSH DPH
+;PUSH DPL
+;MOV TL0,#0A4H		;设置定时初值0.1MS
+;MOV TH0,#0FFH
+;DJNZ COUNT,EXIT
+;JB P3.5,NIZHUAN ;查询方向标志,P3.5 接换向开关 K2
+;MOV FX,#10000000B
+
+;NIZHUAN:
+;MOV A,FX
+;;CJNE A,#10000000B,FZ ;若A不等于11,即正转,则转移到 FZ
+;;MOV A,R1 ;R1 记录上一次电机脉冲状态
+;;MOV P1,A
+;;RR A ;循环右一位
+;;MOV R1,A
+;;MOV P1,A
+;MOV P1,A
+;LCALL DELAY1MS
+;;RL A ;循环左一位
+;;MOV R1,A
+;;MOV P1,A
+;CLR A
+;MOV P1,A
+;;AJMP RE
+
+;;FZ: 
+;;MOV A,R2
+;;MOV P2,A
+;;RL A ;循环左移一位
+;;MOV P2,A
+;;MOV R2,A
+;;MOV P1,A
+;;LCALL DELAY1MS
+;;RL A ;循环左右移一位
+;;MOV P2,A
+;;MOV R2,A
+;;CLR A
+;;MOV P1,A
+
+;RE: MOV A,SPEED
+;MOV DPTR,#TAB
+;MOVC A,@A+DPTR
+;MOV COUNT,A ;把转速级别赋给 COUNT
+;JB P3.5 ,FFX ;P3.5 接换向开关K2, 即换向位,若P3.5=1,则跳到 FFX
+;MOV FX,#10000000B
+;AJMP EXIT
+
+;FFX: MOV FX,#00000001B;只要FX不等于10000000B,就可以通过循环左移或右移进行换向
+
+;EXIT: 
+;POP DPL
+;POP DPH
+;POP ACC
+;RETI
+
+;;以下 UP 为加速中断程序
+;UP: PUSH ACC
+;ACALL DELAY ;延时防抖
+;JB P3.2,UPEX ;P3.2 为外部中断0位,接增速开关S2,低电平有效,若P3.2=1,则退出
+;MOV A,SPEED
+;CJNE A,#7,SZ ;最大等级为7,若 A 不等于 7,则转移到 SZ
+;AJMP UPEX ;若 A=7,则退出
+;SZ: INC SPEED ;SPEED= SPEED+1
+;SETB P1.2
+;UPEX: POP ACC
+;HERE2: JNB P3.2,HERE2 ;本条指令为防止开关 S2 按下去后弹不起,导致一直产生中断
+;RETI
+
+;;以下 DOWN 为减速中断程序
+;DOWN: PUSH ACC
+;ACALL DELAY
+;JB P3.3,DEX ;P3.3 为外部中断1位,接减速开关S3,低电平有效,P3.3=1则退出
+;MOV A,SPEED
+;CJNE A,#0,SJ
+;AJMP DEX
+;SJ: DEC SPEED ;SPEED= SPEED-1
+;SETB P1.1
+;DEX: POP ACC
+;HERE3: JNB P3.3,HERE3
+;RETI
+
+;TAB: DB 0,7,6,5,4,3,2,1
+;LED: DB 0C0H,0F9H,0A4H,0B0H,99H,92H,82H,0F8H,80H,98H
+
+;DELAY1MS:			;@11.0592MHz
+	;PUSH 30H
+	;PUSH 31H
+	;MOV 30H,#9
+	;MOV 31H,#150
+;NEXT:
+	;DJNZ 31H,NEXT
+	;DJNZ 30H,NEXT
+	;POP 31H
+	;POP 30H
+	;RET
+
+
+;DELAY: MOV R6,#10 ;延时子程序2.5MS
+;DEL1: MOV R7,#250
+;HERE1: DJNZ R7, HERE1
+;DJNZ R6,DEL1
+;RET
+
+
+;END
+
+    T EQU 11H;中断计数
+    W EQU 12H;加速次数
+ORG 0000H
+AJMP MAIN
+ORG 0003H ;外部中断0入口地址,加速子程序
+AJMP UP
+ORG 0013H ;外部中断1入口地址,减速子程序
+AJMP DOWN
+ORG 000BH ;定时器0中断入口地址,控占空比来控制电机速度
+AJMP ZDT0
+ORG 0030H
+
+MAIN: 
+MOV SP,#60H
+MOV TMOD,#01H ;工作于定时、软件置位启动,模式1(16 位计时器)
+MOV TH0,#0FFH
+MOV TL0,#0F6H
+SETB ET0 ;定时/计数器允许中断
+CLR IT0 ;外部中断为电平触发方式,低电平有效
+CLR IT1
+SETB EX0 ;外部允许中断
+SETB EX1
+SETB EA ;开总中断
+MOV W,#0
+MOV T,#0
+
+QD: 
+MOV A,W
+JNZ GO ;A 不等于 0,即初始速度不为零,则转移到 GO
+CLR TR0 ;停止定时/计数器
+AJMP QD
+GO: SETB TR0 ;开启定时/计数器
+AJMP QD
+
+
+;以下 ZDT0 为定时器中断程序
+ZDT0: 
+PUSH ACC
+PUSH DPH
+PUSH DPL
+MOV TH0,#0FFH
+MOV TL0,#0F6H
+INC T
+MOV A,T
+CJNE A,#101,PWM
+MOV T,#0
+
+PWM:
+MOV A,T
+CLR C
+SUBB A,W
+JNC KONG
+MOV P1,#10000000B
+AJMP EXIT
+KONG:
+MOV P1,#00000000B
+
+EXIT: 
+POP DPL
+POP DPH
+POP ACC
+RETI
+
+;以下 UP 为加速中断程序
+UP: PUSH ACC
+ACALL DELAY ;延时防抖
+JB P3.2,UPEX ;P3.2 为外部中断0位,接增速开关S2,低电平有效,若P3.2=1,则退出
+MOV A,W
+CJNE A,#100,JIASU
+MOV W,#0
+UPEX: POP ACC
+HERE2: JNB P3.2,HERE2 ;本条指令为防止开关 S2 按下去后弹不起,导致一直产生中断
+RETI
+JIASU:MOV A,W
+      ADD A,#20
+	  MOV W,A
+	  AJMP UPEX
+	  
+	  
+	  
+	  
+	  
+
+;以下 DOWN 为减速中断程序
+DOWN: PUSH ACC
+ACALL DELAY
+JB P3.3,DEX ;P3.3 为外部中断1位,接减速开关S3,低电平有效,P3.3=1则退出
+MOV A,W
+;CJNE A,#0,JIANSU
+;MOV W,#100
+LJMP JIANSU
+DEX: POP ACC
+HERE3: JNB P3.3,HERE3 ;本条指令为防止开关 S2 按下去后弹不起,导致一直产生中断
+RETI
+JIANSU:MOV A,W
+      SUBB A,#20
+	  MOV W,A
+	  AJMP DEX
+
+DELAY:			;20MS
+	PUSH 30H
+	PUSH 31H
+	MOV 30H,#173
+	MOV 31H,#27
+NEXT:
+	DJNZ 31H,NEXT
+	DJNZ 30H,NEXT
+	POP 31H
+	POP 30H
+	RET
+
+
+
+END

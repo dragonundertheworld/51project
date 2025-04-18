@@ -1,0 +1,3 @@
+".\Objects\TEMPRATURE-TEST.obj" 
+TO ".\Objects\temperature sensing-TEST" 
+PRINT(".\Listings\temperature sensing-TEST.m51") RAMSIZE(256) 

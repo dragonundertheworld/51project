@@ -1,0 +1,184 @@
+A51 MACRO ASSEMBLER  SLAVE                                                                05/10/2022 19:32:32 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\SLAVE.obj
+ASSEMBLER INVOKED BY: D:\KEIL\C51\BIN\A51.EXE SLAVE.a51 SET(SMALL) DEBUG PRINT(.\Listings\SLAVE.lst) OBJECT(.\Objects\SL
+                      AVE.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+                       1     ;主机初始化串口.
+  REG                  2     TEMP EQU R1
+0000 7598D0            3     S_INIT: MOV SCON, #0D0H
+                       4     ;11110000->SCON
+                       5     ;使能事口收发，并设置工作在模式三
+0003 758920            6     MOV TMOD, #20H
+                       7     ;设置定时器I1为工作模式2
+0006 758DFD            8     MOV TH1,#0FDH
+                       9     ;波特率设置为9600
+0009 758BFD           10     MOV TL1,#0FDH
+000C D28E             11     SETB TR1
+                      12     ;开启定时器1
+                      13     
+000E                  14     SEND_ADDR1:
+000E D29B             15     SETB TB8
+                      16     ;置位IB8，使主机成为发送地址模式
+0010 7401             17     MOV A,#1
+0012 F599             18     MOV SBUF, A ;发送从机地址
+0014 3099FD           19     JNB TI, $
+                      20     ;判断发送缓冲区是否为空?
+0017 C299             21     CLR TI
+                      22     
+                      23     ;从机检测是否接收到应答信号
+0019                  24     CHECK1:
+0019 3098FD           25     JNB RI, $;
+001C C298             26     CLR RI
+001E E599             27     MOV A, SBUF
+0020 B40173           28     CJNE A, #1, FAIL
+                      29     ;收到应答信号不正确
+                      30     
+                      31     ;主机接收数据
+0023                  32     RECEIVE1_SIG:
+0023 3098FD           33     JNB RI,$
+0026 C298             34     CLR RI
+0028 E599             35     MOV A, SBUF
+002A A2D0             36     MOV C,P;将奇偶标志位传给C
+002C 5061             37     JNC ERROR;若c=0，则传输出错，转至出错处理
+002E C2E7             38     CLR ACC.7
+                      39     ;清除A中最高位做奇偶校验位
+                      40     ;MOV P2,A
+0030 F8               41     MOV R0,A
+                      42     
+0031                  43     RECEIVE1_INT:
+0031 3098FD           44     JNB RI,$
+0034 C298             45     CLR RI
+0036 E599             46     MOV A, SBUF
+0038 A2D0             47     MOV C,P;将奇偶标志位传给C
+003A 5053             48     JNC ERROR;若c=0，则传输出错，转至出错处理
+003C C2E7             49     CLR ACC.7
+                      50     ;清除A中最高位做奇偶校验位
+                      51     ;MOV P2,A
+003E F9               52     MOV R1,A
+                      53     
+003F                  54     RECEIVE1_DECI:
+003F 3098FD           55     JNB RI,$
+0042 C298             56     CLR RI
+0044 E599             57     MOV A, SBUF
+A51 MACRO ASSEMBLER  SLAVE                                                                05/10/2022 19:32:32 PAGE     2
+
+0046 A2D0             58     MOV C,P;将奇偶标志位传给C
+0048 5045             59     JNC ERROR;若c=0，则传输出错，转至出错处理
+004A C2E7             60     CLR ACC.7
+                      61     ;清除A中最高位做奇偶校验位
+                      62     ;MOV P2,A
+004C FA               63     MOV R2,A
+                      64     
+004D                  65     SEND_ADDR2:
+004D D29B             66     SETB TB8
+                      67     ;置位IB8，使主机成为发送地址模式
+004F 7402             68     MOV A,#2
+0051 F599             69     MOV SBUF, A ;发送从机地址
+0053 3099FD           70     JNB TI, $
+                      71     ;判断发送缓冲区是否为空?
+0056 C299             72     CLR TI
+                      73     
+                      74     ;从机检测是否接收到应答信号
+0058                  75     CHECK2:
+0058 3098FD           76     JNB RI, $;
+005B C298             77     CLR RI
+005D E599             78     MOV A, SBUF
+005F B40234           79     CJNE A, #2, FAIL
+                      80     ;收到应答信号不正确
+                      81     
+                      82     ;主机接收数据
+0062                  83     RECEIVE2_SIG:
+0062 3098FD           84     JNB RI,$
+0065 C298             85     CLR RI
+0067 E599             86     MOV A, SBUF
+0069 A2D0             87     MOV C,P;将奇偶标志位传给C
+                      88     
+006B 5022             89     JNC ERROR;若c=0，则传输出错，转至出错处理
+006D C2E7             90     CLR ACC.7
+                      91     ;清除A中最高位做奇偶校验位
+006F FB               92     MOV R3,A
+0070 22               93     RET
+                      94     
+0071                  95     RECEIVE2_INT:
+0071 3098FD           96     JNB RI,$
+0074 C298             97     CLR RI
+0076 E599             98     MOV A, SBUF
+0078 A2D0             99     MOV C,P;将奇偶标志位传给C
+                     100     
+007A 5013            101     JNC ERROR;若c=0，则传输出错，转至出错处理
+007C C2E7            102     CLR ACC.7
+                     103     ;清除A中最高位做奇偶校验位
+007E FC              104     MOV R4,A
+007F 22              105     RET
+                     106     
+0080                 107     RECEIVE2_DECI:
+0080 3098FD          108     JNB RI,$
+0083 C298            109     CLR RI
+0085 E599            110     MOV A, SBUF
+0087 A2D0            111     MOV C,P;将奇偶标志位传给C
+                     112     
+0089 5004            113     JNC ERROR;若c=0，则传输出错，转至出错处理
+008B C2E7            114     CLR ACC.7
+                     115     ;清除A中最高位做奇偶校验位
+008D FD              116     MOV R5,A
+008E 22              117     RET
+008F                 118     ERROR: 
+008F 7590F0          119     MOV P1,#11110000B
+0092 0192            120     AJMP $
+                     121     ;若不相等则继续等待，不做处理
+0094 C29D            122     CLR SM2
+                     123     ;将SM2位清零
+A51 MACRO ASSEMBLER  SLAVE                                                                05/10/2022 19:32:32 PAGE     3
+
+                     124     
+0096                 125     FAIL:
+0096 75A001          126     MOV P2,#00000001B
+0099 0196            127     AJMP FAIL
+                     128     END
+A51 MACRO ASSEMBLER  SLAVE                                                                05/10/2022 19:32:32 PAGE     4
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+ACC. . . . . . . .  D ADDR   00E0H   A   
+CHECK1 . . . . . .  C ADDR   0019H   A   
+CHECK2 . . . . . .  C ADDR   0058H   A   
+ERROR. . . . . . .  C ADDR   008FH   A   
+FAIL . . . . . . .  C ADDR   0096H   A   
+P. . . . . . . . .  B ADDR   00D0H.0 A   
+P1 . . . . . . . .  D ADDR   0090H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+RECEIVE1_DECI. . .  C ADDR   003FH   A   
+RECEIVE1_INT . . .  C ADDR   0031H   A   
+RECEIVE1_SIG . . .  C ADDR   0023H   A   
+RECEIVE2_DECI. . .  C ADDR   0080H   A   
+RECEIVE2_INT . . .  C ADDR   0071H   A   
+RECEIVE2_SIG . . .  C ADDR   0062H   A   
+RI . . . . . . . .  B ADDR   0098H.0 A   
+SBUF . . . . . . .  D ADDR   0099H   A   
+SCON . . . . . . .  D ADDR   0098H   A   
+SEND_ADDR1 . . . .  C ADDR   000EH   A   
+SEND_ADDR2 . . . .  C ADDR   004DH   A   
+SM2. . . . . . . .  B ADDR   0098H.5 A   
+S_INIT . . . . . .  C ADDR   0000H   A   
+TB8. . . . . . . .  B ADDR   0098H.3 A   
+TEMP . . . . . . .    REG    R1          
+TH1. . . . . . . .  D ADDR   008DH   A   
+TI . . . . . . . .  B ADDR   0098H.1 A   
+TL1. . . . . . . .  D ADDR   008BH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR1. . . . . . . .  B ADDR   0088H.6 A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

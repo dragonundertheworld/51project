@@ -1,0 +1,3 @@
+".\Objects\SLAVE.obj" 
+TO ".\Objects\multiplecomputer communication-slave" 
+PRINT(".\Listings\multiplecomputer communication-slave.m51") RAMSIZE(256) 

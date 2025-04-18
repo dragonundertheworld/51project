@@ -1,0 +1,3 @@
+".\Objects\FLOW LIGHT.obj" 
+TO ".\Objects\FLOW LIGHT" 
+PRINT(".\Listings\FLOW LIGHT.m51") RAMSIZE(256) 

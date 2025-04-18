@@ -1,0 +1,3 @@
+".\Objects\从机2.obj" 
+TO ".\Objects\从机2" 
+PRINT(".\Listings\从机2.m51") RAMSIZE(256) 

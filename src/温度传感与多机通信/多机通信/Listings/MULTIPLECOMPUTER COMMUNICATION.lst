@@ -1,0 +1,90 @@
+A51 MACRO ASSEMBLER  MULTIPLECOMPUTER_COMMUNICATION                                       05/10/2022 17:48:05 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\MULTIPLECOMPUTER COMMUNICATION.obj
+ASSEMBLER INVOKED BY: D:\KEIL\C51\BIN\A51.EXE MULTIPLECOMPUTER COMMUNICATION.a51 SET(SMALL) DEBUG PRINT(.\Listings\MULTI
+                      PLECOMPUTER COMMUNICATION.lst) OBJECT(.\Objects\MULTIPLECOMPUTER COMMUNICATION.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+                       1     ;从机串口初始化
+0000 7598F0            2     S_INIT: MOV SCON,#0F0H
+                       3     ;11110000->5C0N
+                       4     ;使能串口收发，并设置工作在模式三
+0003 758920            5     MOV TMOD, #20H
+                       6     ;设置定时器11为工作模式2
+0006 758DFD            7     MOV TH1,#0FDH
+                       8     ;波特率设置为9600
+0009 758BFD            9     MOV TL1,#0FDH
+000C D28E             10     SETB TR1
+                      11     ;主机发送地址
+000E                  12     CHECK:
+000E 3098FD           13     JNB RI, $
+                      14     ;若RI等于0，则继续等待
+0011 C298             15     CLR RI
+                      16     ;清除接收中断标志RI
+0013 E599             17     MOV A,SBUF
+                      18     ;接受主机发来的地址信息
+0015 B401F6           19     CJNE A, #1,CHECK ;判断发送的地址是否 与本机地址相等，address(这里是1)�
+                             �示本机地址
+                      20     ;若不相等则继续等待，不做处理
+0018 C29D             21     CLR SM2
+                      22     ;将SM2位清零
+                      23     ;从机应答
+                      24     
+001A                  25     ACK1:
+001A D29B             26     SETB TB8
+001C 759901           27     MOV SBUF,#1;向主机发送应答信号，即发回本机地址(1)给主机
+001F 3099FD           28     JNB TI, $;trasmission
+                      29     ;判断发送缓冲区是否为空?
+0022 C299             30     CLR TI
+                      31     ;清零发送中断标志II
+                      32     
+0024                  33     TRASMIT_DATA: 
+0024 7455             34     MOV A,#01010101B;(数据)
+0026 F5A0             35     MOV P2,A
+0028 A2D0             36     MOV C, P
+002A B3               37     CPL C
+002B 92E7             38     MOV ACC.7, C;生成最终要 发送的数据到A
+002D C29B             39     CLR TB8
+002F F599             40     MOV SBUF, A
+0031 3099FD           41     JNB TI,$
+0034 C299             42     CLR TI
+                      43     
+                      44     ;清零TB8，使从机进入发送数据状态
+0036 C2E7             45     CLR ACC.7
+0038 22               46     RET
+                      47     
+                      48     END
+A51 MACRO ASSEMBLER  MULTIPLECOMPUTER_COMMUNICATION                                       05/10/2022 17:48:05 PAGE     2
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+ACC. . . . . . . .  D ADDR   00E0H   A   
+ACK1 . . . . . . .  C ADDR   001AH   A   
+CHECK. . . . . . .  C ADDR   000EH   A   
+P. . . . . . . . .  B ADDR   00D0H.0 A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+RI . . . . . . . .  B ADDR   0098H.0 A   
+SBUF . . . . . . .  D ADDR   0099H   A   
+SCON . . . . . . .  D ADDR   0098H   A   
+SM2. . . . . . . .  B ADDR   0098H.5 A   
+S_INIT . . . . . .  C ADDR   0000H   A   
+TB8. . . . . . . .  B ADDR   0098H.3 A   
+TH1. . . . . . . .  D ADDR   008DH   A   
+TI . . . . . . . .  B ADDR   0098H.1 A   
+TL1. . . . . . . .  D ADDR   008BH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR1. . . . . . . .  B ADDR   0088H.6 A   
+TRASMIT_DATA . . .  C ADDR   0024H   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

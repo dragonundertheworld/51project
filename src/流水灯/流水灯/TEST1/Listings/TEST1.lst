@@ -1,0 +1,40 @@
+A51 MACRO ASSEMBLER  TEST1                                                                04/19/2022 21:39:13 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\TEST1.obj
+ASSEMBLER INVOKED BY: D:\KEIL\C51\BIN\A51.EXE TEST1.a51 SET(SMALL) DEBUG PRINT(.\Listings\TEST1.lst) OBJECT(.\Objects\TE
+                      ST1.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+  00A0                 1     LED BIT P2.0  
+  0090                 2     KEY BIT P1.0  
+0000                   3     ORG 0000H  
+0000 020030            4     LJMP MAIN  
+0030                   5     ORG 0030H  
+0030                   6     MAIN:
+0030 2090FD            7     JB KEY, MAIN  
+0033 3090FD            8     JNB KEY,$  
+0036 B2A0              9     CPL LED  
+0038 80F6             10     SJMP MAIN
+                      11     END
+A51 MACRO ASSEMBLER  TEST1                                                                04/19/2022 21:39:13 PAGE     2
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+KEY. . . . . . . .  B ADDR   0090H.0 A   
+LED. . . . . . . .  B ADDR   00A0H.0 A   
+MAIN . . . . . . .  C ADDR   0030H   A   
+P1 . . . . . . . .  D ADDR   0090H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

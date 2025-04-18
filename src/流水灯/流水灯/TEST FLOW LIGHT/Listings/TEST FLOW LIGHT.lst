@@ -1,0 +1,66 @@
+A51 MACRO ASSEMBLER  TEST_FLOW_LIGHT                                                      04/27/2022 13:26:48 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\TEST FLOW LIGHT.obj
+ASSEMBLER INVOKED BY: D:\KEIL\C51\BIN\A51.EXE TEST FLOW LIGHT.a51 SET(SMALL) DEBUG PRINT(.\Listings\TEST FLOW LIGHT.lst)
+                       OBJECT(.\Objects\TEST FLOW LIGHT.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+0000                   1     ORG 0000H
+0000 021000            2             LJMP MAIN
+000B                   3     ORG 000BH
+000B 021025            4     LJMP RELOAD
+1000                   5     ORG 1000H
+1000                   6     MAIN:
+1000 758901            7     MOV TMOD,#01H;TMOD:GATE(T1是否受INT1,INT0影响),C/T,M1,M0,GATE(T0是否受INT1,INT0影�
+                             ��),C/T,M1,M0
+1003 758C3C            8     MOV TH0,#3CH
+1006 758AB0            9     MOV TL0,#0B0H;T1(P3.5)=TH1+TL1;50ms=0.05s
+1009 7914             10     MOV R1,#20
+100B D2AF             11     SETB EA;总允许
+100D D2A9             12     SETB ET0;T0原允许
+100F D28C             13     SETB TR0
+1011 75A0F5           14     MOV P2, #11110101B;主程序
+1014 121020           15     LCALL LOOP
+1017 75A0FA           16     MOV P2, #11111010B;主程序
+101A 121020           17     LCALL LOOP
+101D 021000           18     LJMP MAIN
+1020                  19     LOOP:
+1020 D28C             20     SETB TR0
+1022 D9FC             21     DJNZ R1,LOOP
+1024 32               22     RETI
+1025                  23     RELOAD:
+1025 758C3C           24     MOV TH0,#3CH
+1028 758AB0           25     MOV TL0,#0B0H;T1(P3.5)=TH1+TL1;50ms=0.05s
+102B C28D             26     CLR TF0
+102D 32               27     RETI
+                      28     
+                      29     
+                      30     END
+A51 MACRO ASSEMBLER  TEST_FLOW_LIGHT                                                      04/27/2022 13:26:48 PAGE     2
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+EA . . . . . . . .  B ADDR   00A8H.7 A   
+ET0. . . . . . . .  B ADDR   00A8H.1 A   
+LOOP . . . . . . .  C ADDR   1020H   A   
+MAIN . . . . . . .  C ADDR   1000H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+RELOAD . . . . . .  C ADDR   1025H   A   
+TF0. . . . . . . .  B ADDR   0088H.5 A   
+TH0. . . . . . . .  D ADDR   008CH   A   
+TL0. . . . . . . .  D ADDR   008AH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR0. . . . . . . .  B ADDR   0088H.4 A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

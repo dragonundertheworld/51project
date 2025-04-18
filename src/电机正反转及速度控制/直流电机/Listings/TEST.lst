@@ -1,0 +1,61 @@
+A51 MACRO ASSEMBLER  TEST                                                                 05/19/2022 17:39:47 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\TEST.obj
+ASSEMBLER INVOKED BY: D:\KEIL\C51\BIN\A51.EXE TEST.a51 SET(SMALL) DEBUG PRINT(.\Listings\TEST.lst) OBJECT(.\Objects\TEST
+                      .obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+0000                   1     ORG 0000H
+0000                   2     MAIN:
+0000 7905              3     MOV R1,#5;改变低电平时间
+0002 759080            4     MOV P1,#10000000B
+0005 110E              5     ACALL DELAY500US
+0007 759000            6     MOV P1,#00000000B
+000A 1124              7     ACALL DELAY
+000C 0100              8     AJMP MAIN
+                       9     
+000E                  10     DELAY500US:                     ;@11.0592MHz
+000E 00               11             NOP
+000F C030             12             PUSH 30H
+0011 C031             13             PUSH 31H
+0013 753005           14             MOV 30H,#5
+0016 753148           15             MOV 31H,#72
+0019                  16     NEXT:
+0019 D531FD           17             DJNZ 31H,NEXT
+001C D530FA           18             DJNZ 30H,NEXT
+001F D031             19             POP 31H
+0021 D030             20             POP 30H
+0023 22               21             RET
+                      22             
+0024                  23     DELAY:                  ;@11.0592MHz    
+0024 C030             24             PUSH 30H
+0026 7530DA           25             MOV 30H,#218
+0029                  26     NEXT1:
+0029 D530FD           27             DJNZ 30H,NEXT1
+002C D030             28             POP 30H
+002E D9F4             29             DJNZ R1,DELAY
+0030 22               30             RET
+                      31             END
+A51 MACRO ASSEMBLER  TEST                                                                 05/19/2022 17:39:47 PAGE     2
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+DELAY. . . . . . .  C ADDR   0024H   A   
+DELAY500US . . . .  C ADDR   000EH   A   
+MAIN . . . . . . .  C ADDR   0000H   A   
+NEXT . . . . . . .  C ADDR   0019H   A   
+NEXT1. . . . . . .  C ADDR   0029H   A   
+P1 . . . . . . . .  D ADDR   0090H   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

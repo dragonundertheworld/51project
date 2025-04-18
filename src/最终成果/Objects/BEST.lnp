@@ -1,0 +1,3 @@
+".\Objects\BEST.obj" 
+TO ".\Objects\BEST" 
+PRINT(".\Listings\BEST.m51") RAMSIZE(256) 

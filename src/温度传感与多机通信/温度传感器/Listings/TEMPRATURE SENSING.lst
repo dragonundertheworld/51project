@@ -1,0 +1,301 @@
+A51 MACRO ASSEMBLER  TEMPRATURE_SENSING                                                   05/04/2022 16:25:51 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\TEMPRATURE SENSING.obj
+ASSEMBLER INVOKED BY: D:\KEIL\C51\BIN\A51.EXE TEMPRATURE SENSING.a51 SET(SMALL) DEBUG PRINT(.\Listings\TEMPRATURE SENSIN
+                      G.lst) OBJECT(.\Objects\TEMPRATURE SENSING.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+  00D5                 1          FLAG BIT F0                  ;  声明传感器复位返回的标志位 
+  00B4                 2           DQ BIT P3.4                  ;  定义DQ 作为数据传输端口名 
+  0035                 3           ABIT EQU 35H                                 ;  个
+  0036                 4           BBIT EQU 36H                                 ;  十
+  0037                 5           CBIT EQU 37H                 ;  百
+0000                   6               ORG 0000H 
+0000 2100              7           AJMP MAIN 
+0100                   8           ORG 0100H       
+                       9     ;主程序 
+0100 12010B           10     MAIN: LCALL RESET              ;  复位 
+0103 120126           11        LCALL FBLCHANGE           ;  改变温度的初始分辨率为9位
+0106 120134           12        LCALL GET_TEMP        ;  得到温度
+0109 2197             13        AJMP CHANGE          ;  跳转到数据处理子程序
+                      14        
+                      15     ;复位程序       
+010B D2B4             16     RESET:SETB DQ             ;  总线释放 
+010D 00               17        NOP         ;  保持高电平，延时
+010E C2B4             18        CLR DQ             ;  总线置 0，请求响应
+0110 78FF             19        MOV R0,#0FFH 
+                      20              
+0112 D8FE             21     TSR1: DJNZ R0,TSR1                 ;  延时
+0114 D2B4             22        SETB DQ         ;  再释放
+0116 7825             23        MOV R0,#025H 
+0118 30B402           24     TSR2: JNB DQ,TSR3        ;  改变为 0，则代表得到对应
+011B D8FB             25        DJNZ R0,TSR2            ;  未得到则继续等待，判断
+011D D2D5             26     TSR3: SETB FLAG        ;  得到相应则标志位置 1，代表传感器正常存在 
+011F 787F             27        MOV R0,#07FH 
+0121 D8FE             28     TSR4: DJNZ R0,TSR4                 ;  延时
+0123 D2B4             29        SETB DQ         ;  释放总线，完成复位 
+0125 22               30     RET 
+                      31      
+                      32      
+                      33     ;改变温度分辨率
+0126                  34     FBLCHANGE:
+0126 12010B           35        LCALL RESET       ;  复位
+0129 74CC             36        MOV A,#0CCH         ;  跳过ROM
+012B 12015C           37        LCALL WRITE       ;  把A写入传感器
+012E 741F             38        MOV A,#1FH          ;  改变温度分辨率为9
+0130 12015C           39        LCALL WRITE          ;  把A写入传感器
+0133 22               40     RET
+                      41      
+                      42      
+                      43     ;得到温度并转换
+0134                  44     GET_TEMP:
+0134 D2B4             45        SETB DQ        ;  释放总线
+0136 12010B           46        LCALL RESET       ;  复位
+0139 20D501           47        JB FLAG,TSS2       ;  若传感器不存在，则直接返回主程序
+013C 22               48     RET
+                      49      
+013D 74CC             50     TSS2: MOV A,#0CCH
+013F 12015C           51        LCALL WRITE       ;  执行跳过ROM指令
+0142 7444             52        MOV A,#44H
+0144 12015C           53        LCALL WRITE         ;  执行测温指令
+                      54     ;   MOV R2,1AH
+0147 7BFF             55      TIME: MOV R3,#0FFH 
+0149 DBFE             56        DJNZ R3,$         ;  延时
+                      57     ;   DJNZ R2,TIME
+A51 MACRO ASSEMBLER  TEMPRATURE_SENSING                                                   05/04/2022 16:25:51 PAGE     2
+
+014B 12010B           58        LCALL RESET            ;  复位
+014E 74CC             59        MOV A,#0CCH 
+0150 12015C           60        LCALL WRITE         ;  执行跳过ROM置零
+0153 74BE             61        MOV A,#0BEH 
+0155 12015C           62        LCALL WRITE         ;  执行读取温度数据指令
+0158 120174           63        LCALL READ        ;  跳转至通信子程序
+015B 22               64     RET 
+                      65      
+                      66      
+                      67              
+                      68     ;写入数据            ;  不可超过120us，否则无法写入
+015C 7A08             69     WRITE:MOV R2,#8        ;  写入八位二进制码，即循环次数
+015E C3               70        CLR C             ;  进位标志位初始置零
+015F C2B4             71     WR1:  CLR DQ         ;  拉低总线为写入做准备
+0161 7B05             72        MOV R3,#5 
+0163 DBFE             73        DJNZ R3,$         ;  延时
+0165 13               74        RRC A         ;  A的最低位给CY，使A从低到高写入从机
+0166 92B4             75        MOV DQ,C         ;  将A又循环写入C，写入总线以输入到传感器
+0168 7B2F             76        MOV R3,#2FH
+016A DBFE             77        DJNZ R3,$         ;  延时
+016C D2B4             78        SETB DQ             ;  释放，表示此位写入完毕
+016E 00               79        NOP 
+016F DAEE             80        DJNZ R2,WR1        ;  循环八次，一次写入八位
+0171 D2B4             81        SETB DQ             ;  释放总线
+0173 22               82     RET 
+                      83      
+                      84      
+                      85     ;读出数据
+0174 7C02             86     READ: MOV R4,#2        ;  读取两个八位数据，外层循环次数
+0176 7929             87        MOV R1,#29H        ;  立即数寻址给定存储位置
+0178 7A08             88     REE0: MOV R2,#8         ;  给定数据位数，是内层循环次数
+017A C3               89     REE1: CLR C             ;  进位标志位初始置零
+017B D3               90        SETB C 
+017C 00               91        NOP
+017D 00               92        NOP 
+017E C2B4             93        CLR DQ 
+0180 00               94        NOP 
+0181 00               95        NOP 
+0182 00               96        NOP 
+0183 D2B4             97        SETB DQ             ;  输入脉冲并持续2-3个机器周期
+0185 7B06             98        MOV R3,#6        
+0187 DBFE             99        DJNZ R3,$          ;  延时，等待传感器响应
+0189 A2B4            100        MOV C,DQ          ;  按位读出
+018B 7B17            101        MOV R3,#23
+018D DBFE            102        DJNZ R3,$           ;  延时
+018F 13              103        RRC A              ;  把C存入A内
+0190 DAE8            104        DJNZ R2,REE1        ;  循环8次
+0192 F7              105        MOV @R1,A         ;  存储A
+0193 19              106        DEC R1           ;  更换地址
+0194 DCE2            107        DJNZ R4,REE0         ;  循环2次
+0196 22              108     RET
+                     109     
+                     110      
+                     111             
+                     112     ;数据处理函数
+0197                 113     CHANGE: 
+0197 E529            114        MOV A,29H 
+0199 852926          115        MOV 26H,29H
+019C 852825          116        MOV 25H,28H 
+019F 852824          117        MOV 24H,28H         ;  在24H存储原始数据防止丢失
+01A2 A22F            118        MOV C,25H.7         ;  存储符号位进C
+01A4 5011            119        JNC SN1           ;  判断温度的正负，正数则跳过转补码程序
+01A6 E525            120        MOV A,25H
+01A8 F4              121        CPL A           ;  取补码，由于无效位置1,25H不必担心数据溢出
+01A9 F525            122        MOV 25H,A 
+01AB E526            123        MOV A,26H 
+A51 MACRO ASSEMBLER  TEMPRATURE_SENSING                                                   05/04/2022 16:25:51 PAGE     3
+
+01AD F4              124        CPL A 
+01AE 04              125        INC A            ;  由于是末位，需要加一
+01AF F526            126        MOV 26H,A 
+01B1 852629          127        MOV 29H,26H 
+01B4 852528          128        MOV 28H,25H          ;  在26H，25H中操作后放回29H，28H
+01B7 A240            129     SN1:  MOV C,28H.0          ;  正负温度到此均得到整数部分绝对值
+01B9 13              130        RRC A 
+01BA A241            131        MOV C,28H.1 
+01BC 13              132        RRC A 
+01BD A242            133        MOV C,28H.2 
+01BF 13              134        RRC A 
+01C0 A243            135        MOV C,28H.3           ;  分别循环，存入A内，连续4次滤掉小数部分
+01C2 13              136        RRC A          ;  可分析A内八位恰为整数部分（最高位为0）
+01C3 4005            137        JC SL0 
+01C5 752700          138        MOV 27H,#00H 
+01C8 21CD            139        AJMP SL5 
+01CA 752705          140     SL0:  MOV 27H,#05H 
+01CD F529            141     SL5:  MOV 29H,A           ;  为小数部分显示0和5做准备
+01CF F590            142     MOV P1,A
+01D1 020100          143     LJMP MAIN                    ;  返回主函数，程序执行完毕
+                     144     
+                     145     ;显示函数
+01D4                 146     DISPLAY:
+01D4 E529            147               MOV A,29H 
+01D6 75F00A          148               MOV B,#10 
+01D9 84              149               DIV AB 
+01DA 85F035          150               MOV ABIT,B 
+01DD 75F00A          151               MOV B,#10 
+01E0 84              152               DIV AB 
+01E1 85F036          153               MOV BBIT,B 
+01E4 F537            154          MOV CBIT,A                                       ;  此时可知CBA即为百十个位
+01E6 7804            155               MOV R0,#4  
+01E8 75A021          156               MOV P2,#21H                                     ;  循环显示
+01EB 79FA            157     DIS0: MOV R1,#250                                     ;  长时间延时循环
+01ED A227            158     DIS1: MOV C,24H.7 
+01EF 5012            159               JNC DIS2                                                ;  正数转移，负数�
+                             ��续
+01F1 780E            160               MOV R0,#0EH                                     
+01F3 D2A1            161               SETB P2.1
+01F5 E8              162               MOV A,R0
+01F6 F580            163               MOV P0,A
+01F8 C2A1            164               CLR P2.1
+01FA 7440            165               MOV A,#40H
+01FC F580            166               MOV P0,A 
+01FE 12024D          167               LCALL DELAY 
+0201 4113            168               AJMP DIS3
+0203 780E            169     DIS2: MOV R0,#0EH   
+0205 D2A1            170               SETB P2.1 
+0207 E8              171               MOV A,R0
+0208 F580            172               MOV P0,A
+020A C2A1            173               CLR P2.1 
+020C 7400            174               MOV A,#00H
+020E F580            175               MOV P0,A
+0210 12024D          176               LCALL DELAY                                     ;  符号位判断显示
+0213 E527            177     DIS3: MOV A,27H                                           ;  显示小数
+0215 900256          178               MOV DPTR,#TAB
+0218 93              179               MOVC A,@A+DPTR 
+0219 7807            180               MOV R0,#07H
+021B D2A1            181               SETB P2.1
+021D 8880            182               MOV P0,R0 
+021F C2A1            183               CLR P2.1
+0221 F580            184               MOV P0,A  
+0223 12024D          185               LCALL DELAY                                     ;  小数位判断显示
+0226 E535            186     DIS4: MOV A,ABIT                                          ;显示个位
+0228 900260          187               MOV DPTR,#TAB1
+022B 93              188               MOVC A,@A+DPTR 
+A51 MACRO ASSEMBLER  TEMPRATURE_SENSING                                                   05/04/2022 16:25:51 PAGE     4
+
+022C 780B            189               MOV R0,#0BH 
+022E D2A1            190               SETB P2.1
+0230 8880            191               MOV P0,R0
+0232 C2A1            192               CLR P2.1
+0234 F580            193               MOV P0,A  
+0236 12024D          194               LCALL DELAY 
+0239 E536            195     DIS5: MOV A,BBIT                                          ;显示十位
+023B 900256          196               MOV DPTR,#TAB
+023E 93              197               MOVC A,@A+DPTR
+023F 780D            198               MOV R0,#0DH
+0241 D2A1            199               SETB P2.1
+0243 8880            200           MOV P0,R0
+0245 C2A1            201               CLR P2.1 
+0247 F580            202               MOV P0,A  
+0249 12024D          203               LCALL DELAY                                            
+024C 22              204     RET 
+                     205      
+                     206      
+                     207     ;延迟函数
+024D 7D08            208     DELAY:  MOV R5,#08H
+024F 7EFA            209     DD:             MOV R6,#0FAH
+0251 DEFE            210                     DJNZ R6,$
+0253 DDFA            211                     DJNZ R5,DD
+0255 22              212                     RET
+                     213      
+0256                 214     TAB:                                                              ;  共阴极数码管0-9
+0256 3F065B4F        215               DB  3FH,06H,5BH,4FH,66H,6DH,7DH,07H,7FH,6FH
+025A 666D7D07                
+025E 7F6F                    
+0260                 216     TAB1:                                                             ;  带小数点的个位�
+                             ��示数码0-9
+0260 BF86DBCF        217               DB  0BFH,86H,0DBH,0CFH,0E6H,0EDH,0FDH,87H,0FFH,0EFH
+0264 E6EDFD87                
+0268 FFEF                    
+                     218      
+                     219      
+026A                 220     LOOP:
+026A 80FE            221               JMP LOOP ;
+                     222     
+                     223     END
+A51 MACRO ASSEMBLER  TEMPRATURE_SENSING                                                   05/04/2022 16:25:51 PAGE     5
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+ABIT . . . . . . .  N NUMB   0035H   A   
+B. . . . . . . . .  D ADDR   00F0H   A   
+BBIT . . . . . . .  N NUMB   0036H   A   
+CBIT . . . . . . .  N NUMB   0037H   A   
+CHANGE . . . . . .  C ADDR   0197H   A   
+DD . . . . . . . .  C ADDR   024FH   A   
+DELAY. . . . . . .  C ADDR   024DH   A   
+DIS0 . . . . . . .  C ADDR   01EBH   A   
+DIS1 . . . . . . .  C ADDR   01EDH   A   
+DIS2 . . . . . . .  C ADDR   0203H   A   
+DIS3 . . . . . . .  C ADDR   0213H   A   
+DIS4 . . . . . . .  C ADDR   0226H   A   
+DIS5 . . . . . . .  C ADDR   0239H   A   
+DISPLAY. . . . . .  C ADDR   01D4H   A   
+DQ . . . . . . . .  B ADDR   00B0H.4 A   
+F0 . . . . . . . .  B ADDR   00D0H.5 A   
+FBLCHANGE. . . . .  C ADDR   0126H   A   
+FLAG . . . . . . .  B ADDR   00D0H.5 A   
+GET_TEMP . . . . .  C ADDR   0134H   A   
+LOOP . . . . . . .  C ADDR   026AH   A   
+MAIN . . . . . . .  C ADDR   0100H   A   
+P0 . . . . . . . .  D ADDR   0080H   A   
+P1 . . . . . . . .  D ADDR   0090H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+P3 . . . . . . . .  D ADDR   00B0H   A   
+READ . . . . . . .  C ADDR   0174H   A   
+REE0 . . . . . . .  C ADDR   0178H   A   
+REE1 . . . . . . .  C ADDR   017AH   A   
+RESET. . . . . . .  C ADDR   010BH   A   
+SL0. . . . . . . .  C ADDR   01CAH   A   
+SL5. . . . . . . .  C ADDR   01CDH   A   
+SN1. . . . . . . .  C ADDR   01B7H   A   
+TAB. . . . . . . .  C ADDR   0256H   A   
+TAB1 . . . . . . .  C ADDR   0260H   A   
+TIME . . . . . . .  C ADDR   0147H   A   
+TSR1 . . . . . . .  C ADDR   0112H   A   
+TSR2 . . . . . . .  C ADDR   0118H   A   
+TSR3 . . . . . . .  C ADDR   011DH   A   
+TSR4 . . . . . . .  C ADDR   0121H   A   
+TSS2 . . . . . . .  C ADDR   013DH   A   
+WR1. . . . . . . .  C ADDR   015FH   A   
+WRITE. . . . . . .  C ADDR   015CH   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

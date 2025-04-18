@@ -1,0 +1,4 @@
+".\Objects\LIANTIAO-SLAVE.obj",
+".\Objects\LIANTIAO-MASTER.obj" 
+TO ".\Objects\LIANTIAO" 
+PRINT(".\Listings\LIANTIAO.m51") RAMSIZE(256) 

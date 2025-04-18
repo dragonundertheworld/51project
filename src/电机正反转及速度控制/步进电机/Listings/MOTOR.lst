@@ -1,0 +1,194 @@
+A51 MACRO ASSEMBLER  MOTOR                                                                05/20/2022 13:00:10 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\MOTOR.obj
+ASSEMBLER INVOKED BY: D:\KEIL\C51\BIN\A51.EXE MOTOR.a51 SET(SMALL) DEBUG PRINT(.\Listings\MOTOR.lst) OBJECT(.\Objects\MO
+                      TOR.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+  0010                 1     SPEED EQU 10H ;SPEED为转速等级标志,共7级,即1~7
+  0011                 2     FX EQU 11H ;FX 为方向标志
+  0012                 3     COUNT EQU 12H ;COUNT中断次数标志
+0000                   4     ORG 0000H
+0000 0130              5     AJMP MAIN
+0003                   6     ORG 0003H ;外部中断0入口地址,加速子程序
+0003 01DE              7     AJMP UP
+0013                   8     ORG 0013H ;外部中断1入口地址,减速子程序
+0013 01F4              9     AJMP DOWN
+000B                  10     ORG 000BH ;定时器0中断入口地址,控制中断次数来达到控制转速 
+000B 019A             11     AJMP ZDT0
+0030                  12     ORG 0030H
+0030 758160           13     MAIN: MOV SP,#60H
+0033 758901           14     MOV TMOD,#01H ;工作于定时、软件置位启动,模式1(16 位计时器)
+0036 758CCF           15     MOV TH0,#0CFH
+0039 758A2C           16     MOV TL0,#2CH
+003C 751201           17     MOV COUNT,#01H
+003F D2A9             18     SETB ET0 ;定时/计数器允许中断
+0041 C288             19     CLR IT0 ;外部中断为电平触发方式,低电平有效
+0043 C28A             20     CLR IT1
+0045 D2A8             21     SETB EX0 ;外部允许中断
+0047 D2AA             22     SETB EX1
+0049 D2AF             23     SETB EA ;开总中断
+004B 7911             24     MOV R1,#11H ;四相单四拍运行,共阳数码管方向显示8,速度值显示0
+004D 751000           25     MOV SPEED,#00H
+0050 751100           26     MOV FX,#00H
+0053 E510             27     XIANS: MOV A,SPEED
+0055 900112           28     MOV DPTR,#LED
+0058 93               29     MOVC A,@A+DPTR ;查表获取等级对应数码管代码
+0059 F5A0             30     MOV P2,A ;第二个数码管显示转速等级
+005B E511             31     MOV A,FX ;准备判断转向
+005D B41105           32     CJNE A,#11H,ELS
+0060 7580F9           33     MOV P0, #0F9H ;第一个数码管显示 1,表示正转
+0063 0170             34     AJMP QD
+0065 B40005           35     ELS: CJNE A,#00H,ZHENG
+0068 7580C0           36     MOV P0,#0C0H ;第一个数码管显示 0,表示不转
+006B 0170             37     AJMP QD
+006D 7580BF           38     ZHENG: MOV P0,#0BFH ;第一个数码管显示-,表示反转
+0070 20B410           39     QD: JB P3.4,DD ;P3.4 接启动开关 K1,P3.4=1 时启动
+0073 C28C             40     CLR TR0 ;停止定时/计数器
+0075 7580C0           41     MOV P0,#0C0H ;第一个数码管显示 0,表示不转
+0078 75A0C0           42     MOV P2,#0C0H ;第二个数码管显示 0,表示转速为 0
+007B 751000           43     MOV SPEED,#00H ;重新赋初值
+007E 751100           44     MOV FX,#00H
+0081 0170             45     AJMP QD
+0083 E510             46     DD: MOV A,SPEED
+0085 7004             47     JNZ GO ;A 不等于 0,即初始速度不为零,则转移到 GO
+0087 C28C             48     CLR TR0 ;停止定时/计数器
+0089 0170             49     AJMP QD
+008B D28C             50     GO: SETB TR0 ;开启定时/计数器
+008D 1191             51     ACALL DELAY
+008F 0153             52     AJMP XIANS
+0091 7E0A             53     DELAY: MOV R6,#10 ;延时子程序
+0093 7FFA             54     DEL1: MOV R7,#250
+0095 DFFE             55     HERE1: DJNZ R7, HERE1
+0097 DEFA             56     DJNZ R6,DEL1
+0099 22               57     RET
+A51 MACRO ASSEMBLER  MOTOR                                                                05/20/2022 13:00:10 PAGE     2
+
+                      58     ;以下 ZDT0 为定时器中断程序
+009A C0E0             59     ZDT0: PUSH ACC
+009C C083             60     PUSH DPH
+009E C082             61     PUSH DPL
+00A0 758CD8           62     MOV TH0,#0D8H
+00A3 758AF0           63     MOV TL0,#0F0H
+00A6 D5122E           64     DJNZ COUNT,EXIT
+00A9 20B503           65     JB P3.5,NIZHUAN ;查询方向标志,P3.5 接换向开关 K2
+00AC 751111           66     MOV FX,#11H
+00AF E511             67     NIZHUAN:MOV A,FX
+00B1 B41109           68     CJNE A,#11H,FZ ;若A不等于11,即正转,则转移到 FZ
+00B4 E9               69     MOV A,R1 ;R1 记录上一次电机脉冲状态
+00B5 F590             70     MOV P1,A
+00B7 03               71     RR A ;循环右一位
+00B8 F9               72     MOV R1,A
+00B9 F590             73     MOV P1,A
+00BB 01C4             74     AJMP RE
+00BD E9               75     FZ: MOV A,R1
+00BE F590             76     MOV P1,A
+00C0 23               77     RL A ;循环左移一位
+00C1 F590             78     MOV P1,A
+00C3 F9               79     MOV R1,A
+00C4 E510             80     RE: MOV A,SPEED
+00C6 90010A           81     MOV DPTR,#TAB
+00C9 93               82     MOVC A,@A+DPTR
+00CA F512             83     MOV COUNT,A ;把转速级别赋给 COUNT
+00CC 20B505           84     JB P3.5 ,FFX ;P3.5 接换向开关K2, 即换向位,若P3.5=1,则跳到 FFX
+00CF 751111           85     MOV FX,#11H
+00D2 01D7             86     AJMP EXIT
+00D4 7511FE           87     FFX: MOV FX,#0FEH;只要FX不等于11H,就可以通过循环左移或右移进行换向
+00D7 D082             88     EXIT: POP DPL
+00D9 D083             89     POP DPH
+00DB D0E0             90     POP ACC
+00DD 32               91     RETI
+                      92     ;以下 UP 为加速中断程序
+00DE C0E0             93     UP: PUSH ACC
+00E0 1191             94     ACALL DELAY ;延时防抖
+00E2 20B209           95     JB P3.2,UPEX ;P3.2 为外部中断0位,接增速开关S2,低电平有效,若P3.2=1,则退出
+00E5 E510             96     MOV A,SPEED
+00E7 B40702           97     CJNE A,#7,SZ ;最大等级为 7,若 A 不等于 7,则转移到 SZ
+00EA 01EE             98     AJMP UPEX ;若 A=7,则退出
+00EC 0510             99     SZ: INC SPEED ;SPEED= SPEED+1
+00EE D0E0            100     UPEX: POP ACC
+00F0 30B2FD          101     HERE2: JNB P3.2,HERE2 ;本条指令为防止开关 S2 按下去后弹不起,导致一直产
+                             生中断
+00F3 32              102     RETI
+                     103     ;以下 DOWN 为减速中断程序
+00F4 C0E0            104     DOWN: PUSH ACC
+00F6 1191            105     ACALL DELAY
+00F8 20B309          106     JB P3.3,DEX ;P3.3 为外部中断1位,接减速开关S3,低电平有效,P3.3=1则退出
+00FB E510            107     MOV A,SPEED
+00FD B40002          108     CJNE A,#0,SJ
+0100 2104            109     AJMP DEX
+0102 1510            110     SJ: DEC SPEED ;SPEED= SPEED-1
+0104 D0E0            111     DEX: POP ACC
+0106 30B3FD          112     HERE3: JNB P3.3,HERE3
+0109 32              113     RETI
+010A 003C2823        114     TAB: DB 0,60,40,35,30,28,25,21 ;经仿真,小于21时,由于脉冲太快,会出现失步 ;
+010E 1E1C1915                
+0112 C0F9A4B0        115     LED: DB 0C0H,0F9H,0A4H,0B0H,99H,92H,82H,0F8H,80H,98H
+0116 999282F8                
+011A 8098                    
+                     116     END
+                             
+A51 MACRO ASSEMBLER  MOTOR                                                                05/20/2022 13:00:10 PAGE     3
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+ACC. . . . . . . .  D ADDR   00E0H   A   
+COUNT. . . . . . .  N NUMB   0012H   A   
+DD . . . . . . . .  C ADDR   0083H   A   
+DEL1 . . . . . . .  C ADDR   0093H   A   
+DELAY. . . . . . .  C ADDR   0091H   A   
+DEX. . . . . . . .  C ADDR   0104H   A   
+DOWN . . . . . . .  C ADDR   00F4H   A   
+DPH. . . . . . . .  D ADDR   0083H   A   
+DPL. . . . . . . .  D ADDR   0082H   A   
+EA . . . . . . . .  B ADDR   00A8H.7 A   
+ELS. . . . . . . .  C ADDR   0065H   A   
+ET0. . . . . . . .  B ADDR   00A8H.1 A   
+EX0. . . . . . . .  B ADDR   00A8H.0 A   
+EX1. . . . . . . .  B ADDR   00A8H.2 A   
+EXIT . . . . . . .  C ADDR   00D7H   A   
+FFX. . . . . . . .  C ADDR   00D4H   A   
+FX . . . . . . . .  N NUMB   0011H   A   
+FZ . . . . . . . .  C ADDR   00BDH   A   
+GO . . . . . . . .  C ADDR   008BH   A   
+HERE1. . . . . . .  C ADDR   0095H   A   
+HERE2. . . . . . .  C ADDR   00F0H   A   
+HERE3. . . . . . .  C ADDR   0106H   A   
+IT0. . . . . . . .  B ADDR   0088H.0 A   
+IT1. . . . . . . .  B ADDR   0088H.2 A   
+LED. . . . . . . .  C ADDR   0112H   A   
+MAIN . . . . . . .  C ADDR   0030H   A   
+NIZHUAN. . . . . .  C ADDR   00AFH   A   
+P0 . . . . . . . .  D ADDR   0080H   A   
+P1 . . . . . . . .  D ADDR   0090H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+P3 . . . . . . . .  D ADDR   00B0H   A   
+QD . . . . . . . .  C ADDR   0070H   A   
+RE . . . . . . . .  C ADDR   00C4H   A   
+SJ . . . . . . . .  C ADDR   0102H   A   
+SP . . . . . . . .  D ADDR   0081H   A   
+SPEED. . . . . . .  N NUMB   0010H   A   
+SZ . . . . . . . .  C ADDR   00ECH   A   
+TAB. . . . . . . .  C ADDR   010AH   A   
+TH0. . . . . . . .  D ADDR   008CH   A   
+TL0. . . . . . . .  D ADDR   008AH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TR0. . . . . . . .  B ADDR   0088H.4 A   
+UP . . . . . . . .  C ADDR   00DEH   A   
+UPEX . . . . . . .  C ADDR   00EEH   A   
+XIANS. . . . . . .  C ADDR   0053H   A   
+ZDT0 . . . . . . .  C ADDR   009AH   A   
+ZHENG. . . . . . .  C ADDR   006DH   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)
