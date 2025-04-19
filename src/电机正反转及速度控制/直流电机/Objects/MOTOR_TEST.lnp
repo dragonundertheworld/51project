@@ -1,3 +1,0 @@
-".\Objects\TEST.obj" 
-TO ".\Objects\MOTOR_TEST" 
-PRINT(".\Listings\MOTOR_TEST.m51") RAMSIZE(256) 

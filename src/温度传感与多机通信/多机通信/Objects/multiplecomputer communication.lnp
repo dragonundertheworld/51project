@@ -1,3 +1,0 @@
-".\Objects\MULTIPLECOMPUTER COMMUNICATION.obj" 
-TO ".\Objects\multiplecomputer communication" 
-PRINT(".\Listings\multiplecomputer communication.m51") RAMSIZE(256) 

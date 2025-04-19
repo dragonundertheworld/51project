@@ -1,3 +1,0 @@
-".\Objects\TEST FLOW LIGHT.obj" 
-TO ".\Objects\TEST FLOW LIGHT" 
-PRINT(".\Listings\TEST FLOW LIGHT.m51") RAMSIZE(256) 

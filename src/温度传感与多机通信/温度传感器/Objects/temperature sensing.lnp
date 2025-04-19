@@ -1,3 +1,0 @@
-".\Objects\TEMPRATURE SENSING.obj" 
-TO ".\Objects\temperature sensing" 
-PRINT(".\Listings\temperature sensing.m51") RAMSIZE(256) 

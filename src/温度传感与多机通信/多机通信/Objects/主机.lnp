@@ -1,3 +1,0 @@
-".\Objects\主机.obj" 
-TO ".\Objects\主机" 
-PRINT(".\Listings\主机.m51") RAMSIZE(256) 

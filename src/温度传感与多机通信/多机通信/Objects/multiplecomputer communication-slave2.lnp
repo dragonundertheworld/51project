@@ -1,3 +1,0 @@
-".\Objects\SLAVE2.obj" 
-TO ".\Objects\multiplecomputer communication-slave2" 
-PRINT(".\Listings\multiplecomputer communication-slave2.m51") RAMSIZE(256) 

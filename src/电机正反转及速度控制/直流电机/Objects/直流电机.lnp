@@ -1,3 +1,0 @@
-".\Objects\MOTOR.obj" 
-TO ".\Objects\直流电机" 
-PRINT(".\Listings\直流电机.m51") RAMSIZE(256) 

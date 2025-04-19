@@ -1,3 +1,0 @@
-".\Objects\BLUETOOTH.obj" 
-TO ".\Objects\BLUETOOTH" 
-PRINT(".\Listings\BLUETOOTH.m51") RAMSIZE(256) 
