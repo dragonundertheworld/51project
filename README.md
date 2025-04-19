@@ -4,6 +4,18 @@
 
 This repository contains a collection of projects and experiments developed for the 8051 microcontroller family (specifically targeting variants like AT89C52 and STC89C52RC). The projects cover various peripheral interactions and communication protocols commonly used in embedded systems development. They were developed using the Keil uVision IDE and the Keil C51 toolchain, utilizing both C and 8051 Assembly language.
 
+See demo video of [humid+daytime](./media/实物演示：潮湿+白天.mp4), [humid+night](./media/实物演示：潮湿+夜晚.mp4), [dry+daytime](./media/实物演示：干燥+白天.mp4) and [dry+night](./media/实物演示：干燥+夜晚.mp4)
+
+- [51Project: 8051 Microcontroller Experiments](#51project-8051-microcontroller-experiments)
+  - [Project Overview](#project-overview)
+  - [Directory Structure](#directory-structure)
+  - [Modules / Features](#modules--features)
+  - [Hardware Requirements](#hardware-requirements)
+  - [Software Requirements](#software-requirements)
+  - [Building the Projects](#building-the-projects)
+  - [Usage](#usage)
+  - [Documentation](#documentation)
+
 ## Directory Structure
 
 ```
